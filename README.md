@@ -42,7 +42,6 @@ gdown --folder 1cARJcCKWtGP44p3e0X4Umpf_ISB-64lC # for our 4 COPD train cases
 │       │   ├── case_002_insp.nii.gz
 │       │   ├── ..........
         └── scans
-│       ├── scans
 │       │   ├── case_001_exp.nii.gz
 │       │   ├── case_001_insp.nii.gz
 │       │   ├── case_002_exp.nii.gz

@@ -1,3 +1,7 @@
+### Create a virtual miniconda environment
+```
+```
+
 ### To download the data:
 
 1. Run 
@@ -21,4 +25,29 @@ gdown --folder 1cARJcCKWtGP44p3e0X4Umpf_ISB-64lC # for our 4 COPD train cases
 
 ### TODO:
 
-1. Write a script to load and process data
+1. Write a script to load and process data to have it in the format
+
+```
+.
+└── data
+    └── learn2reg
+        ├── keypoints
+│       │   ├── case_001.csv
+│       │   ├── case_002.csv
+│       │   ├── ..........
+        ├── lungMasks
+│       │   ├── case_001_exp.nii.gz
+│       │   ├── case_001_insp.nii.gz
+│       │   ├── case_002_exp.nii.gz
+│       │   ├── case_002_insp.nii.gz
+│       │   ├── ..........
+        └── scans
+│       ├── scans
+│       │   ├── case_001_exp.nii.gz
+│       │   ├── case_001_insp.nii.gz
+│       │   ├── case_002_exp.nii.gz
+│       │   ├── case_002_insp.nii.gz
+│       │   ├── ..........
+```
+### After the data is in the right format run the script to fix train/val splits
+```$ python data/fix_train_partitions.py```s

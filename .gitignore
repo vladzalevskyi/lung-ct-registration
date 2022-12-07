@@ -132,4 +132,4 @@ dmypy.json
 .vscode/
 
 # ignore data files
-/data/
+data/*

@@ -1,2 +1,6 @@
 gdown
 SimpleITK-SimpleElastix
+pytorch
+torchvision
+torchaudio
+nibabel

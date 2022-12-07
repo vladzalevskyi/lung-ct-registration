@@ -132,4 +132,6 @@ dmypy.json
 .vscode/
 
 # ignore data files
-data/*
+data/learn2reg/
+data/empire10/
+data/copd/

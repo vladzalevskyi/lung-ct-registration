@@ -135,3 +135,6 @@ dmypy.json
 data/learn2reg/
 data/empire10/
 data/copd/
+
+# ignore results
+lightning_logs/

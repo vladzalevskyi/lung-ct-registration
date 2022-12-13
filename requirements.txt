@@ -4,3 +4,5 @@ pytorch
 torchvision
 torchaudio
 nibabel
+opecv-python
+# lungmask

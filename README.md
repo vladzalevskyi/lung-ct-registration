@@ -57,3 +57,13 @@ gdown --folder 1cARJcCKWtGP44p3e0X4Umpf_ISB-64lC # for our 4 COPD train cases
 
 2. Run the following script to preprocess the data
 ```$ python data/preprocess_data.py```
+
+3. For each image resolution rebuild the model using
+```$ python synthmorph/convert_tf2torch.py```  
+and chaning inside the file the resolution to the input image. For now the COPD is resized to (512, 512, 96)
+4. Run ```$ python synthmorph/predict_flow.py``` to get the deformation field matrix for each case
+5. Run ```$ python synthmorph/transform_kps.py``` to transform keypoints to the new space for each case and calculate resulting TRE.
+
+### To activate conda use
+
+eval "$(/home/mira1/miniconda3/bin/conda shell.bash hook)"

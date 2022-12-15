@@ -140,3 +140,4 @@ data/copd_scans/
 lightning_logs/
 processed_data/
 models/weights
+synthmorph/results/

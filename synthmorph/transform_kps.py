@@ -12,21 +12,23 @@ import torch
 import pandas as pd
 from voxelmorph.tf.utils import point_spatial_transformer
 import tensorflow as tf
-from synthmorph.utils import compute_TRE
+from utils import compute_TRE
+
+CASE = 'case_004'
 
 # Load preprocessed data (scaled between 0 and 1 and with the moving data in the space of the fixed one)
-fixed = nib.load("processed_data/copd_scans/scans/case_001_insp.nii.gz")
+fixed = nib.load(f"processed_data/copd_scans/scans/{CASE}_insp.nii.gz")
 fixed_a = fixed.get_fdata()
-moving = nib.load("processed_data/copd_scans/scans/case_001_exp.nii.gz")
+moving = nib.load(f"processed_data/copd_scans/scans/{CASE}_exp.nii.gz")
 moving_a = moving.get_fdata()
-kps = pd.read_csv("processed_data/copd_scans/keypoints/case_001.csv", header=None).values
+kps = pd.read_csv(f"processed_data/copd_scans/keypoints/{CASE}.csv", header=None).values
 
     
 moving_kps = kps[:, [0, 1, 2]]
 fixed_kps = kps[:, [3, 4, 5]]
 
-pos_flow = np.load("pos_flow.npy")
-neg_flow = np.load("neg_flow.npy")
+pos_flow = np.load(f"synthmorph/results/{CASE}_pos_flow.npy")
+neg_flow = np.load(f"synthmorph/results/{CASE}_neg_flow.npy")
 
 print(kps)
 
@@ -35,7 +37,7 @@ print(kps)
 # # It only needs to be scaled and set in a common space
 
 # Load the PyTorch model and specify the device
-pt_model_inference = torch.load('pt_smshapes.pt')
+pt_model_inference = torch.load('/home/mira1/vlex_mira/maia-mira/models/weights/torch_shapes.pt')
 pt_model_inference.eval()
 
 # # Prepare the data for inference
@@ -49,13 +51,25 @@ pt_model_inference.eval()
 annotations = moving_kps[:, [0, 1, 2]]
 annotations = annotations[np.newaxis, ...]
 
-print(neg_flow.shape)
+# print(neg_flow.shape)
 neg_flow_reshaped = np.moveaxis(neg_flow, [1], [4])
-print(neg_flow_reshaped.shape)
+# print(neg_flow_reshaped.shape)
 # warp annotations
 data = [tf.convert_to_tensor(f, dtype=tf.float32) for f in [annotations, neg_flow_reshaped]]
 moving_transformed = point_spatial_transformer(data)[0, ...].numpy()
 
-spc = [1.44, 1.44, 3.16] # USE ORIGINAL SPACING
-print('Before: ', compute_TRE(moving_kps, fixed_kps, spc), )
-print('After: ', compute_TRE(moving_transformed, fixed_kps, spc) )
+if 'case_001' in CASE:
+    # voxel_size = [0.63, 0.63, 3.16] # gets size (512, 512, 96)
+    voxel_size = [1.44, 1.44, 3.14] # gets size (224, 224, 96)
+elif 'case_002' in CASE:
+    # voxel_size = [0.65, 0.65, 2.65]
+    voxel_size = [1.489, 1.489, 2.65]
+elif 'case_003' in CASE:
+    # voxel_size = [0.65, 0.65, 3.29]
+    voxel_size = [1.489, 1.489, 3.29]
+elif 'case_004' in CASE:
+    # voxel_size = [0.59, 0.59, 3.29]
+    voxel_size = [1.35, 1.35, 3.29]
+
+print('Before: ', compute_TRE(moving_kps, fixed_kps, voxel_size))
+print('After: ', compute_TRE(moving_transformed, fixed_kps, voxel_size))

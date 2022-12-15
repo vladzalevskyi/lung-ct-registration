@@ -1,22 +1,22 @@
 import os
 import numpy as np
 import nibabel as nib
-from synthmorph.voxelmorph.torch.networks import VxmDense
+from voxelmorph.torch.networks import VxmDense
 from nibabel.processing import conform
 import torch
 
-
+CASE = 'case_004'
 # Load preprocessed data (scaled between 0 and 1 and with the moving data in the space of the fixed one)
-fixed = nib.load("processed_data/copd_scans/scans/case_001_insp.nii.gz")
+fixed = nib.load(f"processed_data/copd_scans/scans/{CASE}_insp.nii.gz")
 
-moving = nib.load("processed_data/copd_scans/scans/case_001_exp.nii.gz")
+moving = nib.load(f"processed_data/copd_scans/scans/{CASE}_exp.nii.gz")
 # print(moving.shape, moving.max(), moving.min())
 # These data are in my local computer but any data could be used to perform the same analysis.
 # It only needs to be scaled and set in a common space
 
 # Load the PyTorch model and specify the device
 device = 'cpu'
-pt_model_inference = torch.load('synthmorph/torch_shapes.pt')
+pt_model_inference = torch.load('/home/mira1/vlex_mira/maia-mira/models/weights/torch_shapes.pt')
 pt_model_inference.bidir = True
 pt_model_inference.eval()
 
@@ -38,6 +38,6 @@ with torch.no_grad():
 
 moved_data = moved[0][0].detach().numpy()
 moved_nifti = nib.Nifti1Image(moved_data, fixed.affine)
-nib.save(moved_nifti, 'registered_data_pytorch.nii.gz')
-np.save("synthmorph/pos_flow.npy", pos_flow)
-np.save("synthmorph/neg_flow.npy", neg_flow)
+nib.save(moved_nifti, f"/home/mira1/vlex_mira/maia-mira/synthmorph/results/{CASE}_registered_exp2insp.nii.gz")
+np.save(f"/home/mira1/vlex_mira/maia-mira/synthmorph/results/{CASE}_pos_flow.npy", pos_flow)
+np.save(f"/home/mira1/vlex_mira/maia-mira/synthmorph/results/{CASE}_neg_flow.npy", neg_flow)

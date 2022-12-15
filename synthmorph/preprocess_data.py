@@ -247,13 +247,17 @@ def resample_imgs_points(fixed_image, moving_img,
     if dataset is not None and 'copd' in str(dataset):
         
         if 'case_001' in str(case):
-            voxel_size = [0.63, 0.63, 3.16]
+            # voxel_size = [0.63, 0.63, 3.16] # gets size (512, 512, 96)
+            voxel_size = [1.44, 1.44, 3.14] # gets size (224, 224, 96)
         elif 'case_002' in str(case):
-            voxel_size = [0.65, 0.65, 2.65]
+            # voxel_size = [0.65, 0.65, 2.65]
+            voxel_size = [1.489, 1.489, 2.65]
         elif 'case_003' in str(case):
-            voxel_size = [0.65, 0.65, 3.29]
+            # voxel_size = [0.65, 0.65, 3.29]
+            voxel_size = [1.489, 1.489, 3.29]
         elif 'case_004' in str(case):
-            voxel_size = [0.59, 0.59, 3.29]
+            # voxel_size = [0.59, 0.59, 3.29]
+            voxel_size = [1.35, 1.35, 3.29]
         
         fixed_rsmp = resample_volume(fixed_image, new_spacing=voxel_size)
         moving_rsmp = resample_volume(moving_img, new_spacing=voxel_size)

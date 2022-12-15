@@ -1,3 +1,13 @@
 gdown
 dipy
-
+packaging
+neurite
+torch
+torchvision
+torchaudio
+tensorflow
+scikit-image
+SimpleITK
+numba
+pandas
+SimpleITK-SimpleElastix

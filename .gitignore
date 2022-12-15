@@ -134,7 +134,9 @@ dmypy.json
 # ignore data files
 data/learn2reg/
 data/empire10/
-data/copd/
+data/copd_scans/
 
 # ignore results
 lightning_logs/
+processed_data/
+models/weights

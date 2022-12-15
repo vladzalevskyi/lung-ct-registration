@@ -50,3 +50,10 @@ gdown --folder 1cARJcCKWtGP44p3e0X4Umpf_ISB-64lC # for our 4 COPD train cases
 ```
 ### After the data is in the right format run the script to fix train/val splits
 ```$ python data/fix_train_partitions.py```s
+
+
+### To run SynthMorph predictions for COPD cases:
+1. Preprocess the data by ensuring directory structure as described above
+
+2. Run the following script to preprocess the data
+```$ python data/preprocess_data.py```

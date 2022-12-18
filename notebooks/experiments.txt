@@ -1,0 +1,358 @@
+# 3b
+# to save csv with results
+exp_name = '3b_cyl_mask_aff_lm_bspline2_p0011' 
+
+# select which cases to run
+cases = ['001', '002', '003', '004']
+
+results = {}
+
+# either to save the transformed inhale points
+save_transformed_points = False
+save_final_moving_image = False
+
+for train_case in tqdm(cases, total=len(cases)):
+    
+    case_results = {}
+
+    # read images and masks
+    fixed_itk = sitk.ReadImage(str(scans_path/f'case_{train_case}_insp.nii.gz'))
+    fixed_image = convert_itk_to_nda(fixed_itk)
+    # fixed_itk = normalize_copd_to_HU(fixed_image, fixed_itk)
+    fixed_mask = convert_nda_to_itk((fixed_image >= 0).astype(np.uint8), fixed_itk)
+
+    fixed_lung_mask = sitk.ReadImage(str(lung_masks_path/f'case_{train_case}_insp.nii.gz'))
+
+    moving_itk = sitk.ReadImage(str(scans_path/f'case_{train_case}_exp.nii.gz'))
+    moving_image = convert_itk_to_nda(moving_itk)
+    # moving_itk = normalize_copd_to_HU(moving_image, moving_itk)
+    moving_mask = convert_nda_to_itk((moving_image >= 0).astype(np.uint8), moving_itk)
+
+    moving_lung_mask = sitk.ReadImage(str(lung_masks_path/f'case_{train_case}_exp.nii.gz'))
+
+    # # read points
+    points_inhale = np.loadtxt(kp_path/f'case_{train_case}_insp.txt').astype(np.int16)
+    points_exhale = np.loadtxt(kp_path/f'case_{train_case}_exp.txt').astype(np.int16)
+
+    # read param 11
+    pm_affine = sitk.ReadParameterFile(str(paramMaps_path/'Parameters.Par0011.affine.txt'))
+    pm_bspline_1 = sitk.ReadParameterFile(str(paramMaps_path/'Parameters.Par0011.bspline1_s.txt'))
+    pm_bspline_2 = sitk.ReadParameterFile(str(paramMaps_path/'Parameters.Par0011.bspline2_s.txt'))
+
+    # affine p11 transformation with cyl mask
+
+    moving_reg_aff, mov_param = register_image_external(fixed_image=fixed_itk, fixed_mask=fixed_mask, 
+                                                    moving_image=moving_itk, moving_mask=moving_mask, 
+                                                    paramMaps=[pm_affine], print_console=False)
+                                                    
+    moving_lm_aff = register_image_w_mask(fixed_image=None, moving_image=moving_lung_mask, fixed_mask=None, moving_mask=None,
+                                            transformParameterMap=mov_param, interpolator='nn')[0]
+    
+    points_inhale_moved_aff = transform_points(moving_itk=moving_itk, mov_param=mov_param, 
+                                            fixed_points_path=kp_path/f"case_{train_case}_insp.pts",
+                                            output_dir=results_path/'affine/', train_case=train_case)
+
+    case_results['baseline'] = compute_TRE(points_exhale, points_inhale, voxel_spacing=moving_itk.GetSpacing())
+    case_results['aff'] = compute_TRE(points_exhale, points_inhale_moved_aff, voxel_spacing=moving_itk.GetSpacing())
+        
+    print(f"Baseline TRE: {case_results['baseline']}")
+    print(f"Registration (affine) TRE: {case_results['aff']}")
+    
+    # bspline p11 transformation with lung mask
+
+    moving_reg_bs, mov_param = register_image_external(fixed_image=fixed_itk, fixed_mask=fixed_mask, 
+                                                    moving_image=moving_reg_aff, moving_mask=sitk.Cast(moving_lm_aff, sitk.sitkUInt8), 
+                                                    paramMaps=[pm_bspline_2], print_console=False)
+
+    moving_lm_bs = register_image_w_mask(fixed_image=None, moving_image=moving_lm_aff, fixed_mask=None, moving_mask=None,
+                                            transformParameterMap=mov_param, interpolator='nn')[0]
+    
+    points_inhale_moved_bs = transform_points(moving_itk=moving_itk, mov_param=mov_param, 
+                                            fixed_points_path=results_path/f'affine/case_{train_case}_outputpoints.pts',
+                                            output_dir=results_path, train_case=train_case)
+    
+    case_results['bspline2'] = compute_TRE(points_exhale, points_inhale_moved_bs, voxel_spacing=moving_itk.GetSpacing())
+    print(f"Registration (bspline) TRE: {case_results['bspline2']}")
+
+    results[train_case] = case_results
+
+pd.DataFrame(results).to_csv(results_path/f'{exp_name}.csv')
+-----------------------------------------------------------------------------
+# 2b
+# to save csv with results
+exp_name = '2b_cyl_mask_euc_aff_lm_bspline_default' 
+
+# select which cases to run
+cases = ['001', '002', '003', '004']
+
+results = {}
+
+# either to save the transformed inhale points
+save_transformed_points = False
+save_final_moving_image = False
+
+for train_case in tqdm(cases, total=len(cases)):
+    
+    case_results = {}
+
+    # read images and masks
+    fixed_itk = sitk.ReadImage(str(scans_path/f'case_{train_case}_insp.nii.gz'))
+    fixed_image = convert_itk_to_nda(fixed_itk)
+    # fixed_itk = normalize_copd_to_HU(fixed_image, fixed_itk)
+    fixed_mask = convert_nda_to_itk((fixed_image >= 0).astype(np.uint8), fixed_itk)
+
+    fixed_lung_mask = sitk.ReadImage(str(lung_masks_path/f'case_{train_case}_insp.nii.gz'))
+
+    moving_itk = sitk.ReadImage(str(scans_path/f'case_{train_case}_exp.nii.gz'))
+    moving_image = convert_itk_to_nda(moving_itk)
+    # moving_itk = normalize_copd_to_HU(moving_image, moving_itk)
+    moving_mask = convert_nda_to_itk((moving_image >= 0).astype(np.uint8), moving_itk)
+
+    moving_lung_mask = sitk.ReadImage(str(lung_masks_path/f'case_{train_case}_exp.nii.gz'))
+
+    # # read points
+    points_inhale = np.loadtxt(kp_path/f'case_{train_case}_insp.txt').astype(np.int16)
+    points_exhale = np.loadtxt(kp_path/f'case_{train_case}_exp.txt').astype(np.int16)
+
+    # euclidean transformation with cyl mask
+
+    moving_reg_euc, mov_param = register_image_w_mask(fixed_image=fixed_itk, fixed_mask=fixed_mask, 
+                                                    moving_image=moving_itk, moving_mask=moving_mask, default_type='translation',
+                                                    print_console=False)
+    moving_lm_euc = register_image_w_mask(fixed_image=None, moving_image=moving_lung_mask, fixed_mask=None, moving_mask=None,
+                                            transformParameterMap=mov_param, interpolator='nn')[0]
+    
+    points_inhale_moved_euc = transform_points(moving_itk=moving_itk, mov_param=mov_param, 
+                                            fixed_points_path=kp_path/f"case_{train_case}_insp.pts",
+                                            output_dir=results_path/'euc/')
+    
+    case_results['baseline'] = compute_TRE(points_exhale, points_inhale, voxel_spacing=moving_itk.GetSpacing())
+    case_results['euc'] = compute_TRE(points_exhale, points_inhale_moved_euc, voxel_spacing=moving_itk.GetSpacing())
+
+    print(f"Baseline TRE: {case_results['baseline']}")
+    print(f"Registration (euc) TRE: {case_results['euc']}")
+
+    # affine transformation with cyl mask
+
+    moving_reg_aff, mov_param = register_image_w_mask(fixed_image=fixed_itk, fixed_mask=fixed_mask, 
+                                                    moving_image=moving_reg_euc, moving_mask=moving_mask, 
+                                                    default_type='affine', print_console=False)
+    moving_lm_aff = register_image_w_mask(fixed_image=None, moving_image=moving_lm_euc, fixed_mask=None, moving_mask=None,
+                                            transformParameterMap=mov_param, interpolator='nn')[0]
+    
+    points_inhale_moved_aff = transform_points(moving_itk=moving_itk, mov_param=mov_param, 
+                                            fixed_points_path=results_path/f'euc/case_{train_case}_outputpoints.pts',
+                                            output_dir=results_path/'affine/')
+    
+    case_results['aff'] = compute_TRE(points_exhale, points_inhale_moved_aff, voxel_spacing=moving_itk.GetSpacing())
+    print(f"Registration (affine) TRE: {case_results['aff']}")
+    
+    # bspline transformation with lung mask
+
+    moving_reg_bs, mov_param = register_image_w_mask(fixed_image=fixed_itk, fixed_mask=fixed_lung_mask, 
+                                                    moving_image=moving_reg_aff, moving_mask=sitk.Cast(moving_lm_aff, sitk.sitkUInt8), 
+                                                    default_type='bspline', print_console=False)
+    moving_lm_bs = register_image_w_mask(fixed_image=None, moving_image=moving_lm_aff, fixed_mask=None, moving_mask=None,
+                                            transformParameterMap=mov_param, interpolator='nn')[0]
+    
+    points_inhale_moved_bs = transform_points(moving_itk=moving_itk, mov_param=mov_param, 
+                                            fixed_points_path=results_path/f'affine/case_{train_case}_outputpoints.pts',
+                                            output_dir=results_path)
+    
+    case_results['bspline'] = compute_TRE(points_exhale, points_inhale_moved_bs, voxel_spacing=moving_itk.GetSpacing())
+    print(f"Registration (bspline) TRE: {case_results['bspline']}")
+
+    results[train_case] = case_results
+
+pd.DataFrame(results).to_csv(results_path/f'{exp_name}.csv')
+
+--------------------------------------------------------------------------------------------------
+# 1b
+exp_name = '1b_cyl_mask_aff_bspline_default' 
+
+# select which cases to run
+cases = ['001', '002', '003', '004']
+
+results = {}
+
+# either to save the transformed inhale points
+save_transformed_points = False
+save_final_moving_image = False
+
+for train_case in tqdm(cases, total=len(cases)):
+    
+    case_results = {}
+
+    # read images and masks
+    fixed_itk = sitk.ReadImage(str(scans_path/f'case_{train_case}_insp.nii.gz'))
+    fixed_image = convert_itk_to_nda(fixed_itk)
+    # fixed_itk = normalize_copd_to_HU(fixed_image, fixed_itk)
+    fixed_mask = convert_nda_to_itk((fixed_image >= 0).astype(np.uint8), fixed_itk)
+
+    # fixed_lung_mask = sitk.ReadImage(str(lung_masks_path/f'case_{train_case}_insp.nii.gz'))
+
+    moving_itk = sitk.ReadImage(str(scans_path/f'case_{train_case}_exp.nii.gz'))
+    moving_image = convert_itk_to_nda(moving_itk)
+    # moving_itk = normalize_copd_to_HU(moving_image, moving_itk)
+    moving_mask = convert_nda_to_itk((moving_image >= 0).astype(np.uint8), moving_itk)
+
+    # moving_lung_mask = sitk.ReadImage(str(lung_masks_path/f'case_{train_case}_exp.nii.gz'))
+
+    # # read points
+    points_inhale = np.loadtxt(kp_path/f'case_{train_case}_insp.txt').astype(np.int16)
+    points_exhale = np.loadtxt(kp_path/f'case_{train_case}_exp.txt').astype(np.int16)
+
+    moving_reg_affine, mov_param = register_image_w_mask(fixed_image=fixed_itk, fixed_mask=fixed_mask, 
+                                                    moving_image=moving_itk, moving_mask=moving_mask, default_type='affine',
+                                                    print_console=False)
+    
+    # propagate (transform) the points (landmarks) with the obtained transformation (deformation map)
+
+    transformixImageFilter = sitk.TransformixImageFilter()
+    transformixImageFilter.LogToConsoleOff()
+        # set moving image to initialize object correctly
+    transformixImageFilter.SetMovingImage(moving_itk)
+
+    # set previously obtained transformation parameters
+    transformixImageFilter.SetTransformParameterMap(mov_param)
+
+    # set points to transform (inhale)
+    transformixImageFilter.SetFixedPointSetFileName(str(kp_path/f"case_{train_case}_insp.pts"))
+    transformixImageFilter.SetOutputDirectory(str(results_path/'affine/'))
+    transformixImageFilter.Execute()
+
+    # from output file, parse the output points and compute TRE
+    out_points_path = results_path/'affine/outputpoints.txt'
+    points_inhale_moved = parse_points_reg(out_points_path)
+    save_pts_itk(points_inhale_moved, results_path/f'affine/{train_case}_outputpoints.pts')
+
+    case_results['baseline'] = compute_TRE(points_exhale, points_inhale, voxel_spacing=moving_itk.GetSpacing())
+    case_results['affine'] = compute_TRE(points_exhale, points_inhale_moved, voxel_spacing=moving_itk.GetSpacing())
+
+    if os.path.isfile(str(out_points_path)):
+        os.remove(str(out_points_path))
+    
+    print(f"Baseline TRE: {case_results['baseline']}")
+    print(f"Registration (affine) TRE: {case_results['affine']}")
+
+    # if os.path.isfile(str(out_points_path)):
+    #     os.remove(str(out_points_path))
+
+    moving_reg_final, mov_param = register_image_w_mask(fixed_image=fixed_itk, fixed_mask=fixed_mask, 
+                                                    moving_image=moving_reg_affine, moving_mask=moving_mask, default_type='bspline',
+                                                    print_console=False)
+    
+    if save_final_moving_image:
+         # write final registration
+        sitk.WriteImage(moving_reg_final, str(results_path/f'case_{train_case}_{exp_name}.nii.gz'))
+
+    # propagate (transform) the points (landmarks) with the obtained transformation (deformation map)
+
+    transformixImageFilter = sitk.TransformixImageFilter()
+    transformixImageFilter.LogToConsoleOff()
+        # set moving image to initialize object correctly
+    transformixImageFilter.SetMovingImage(moving_itk)
+
+    # set previously obtained transformation parameters
+    transformixImageFilter.SetTransformParameterMap(mov_param)
+
+    # set points to transform (inhale)
+    transformixImageFilter.SetFixedPointSetFileName(str(results_path/f'affine/{train_case}_outputpoints.pts'))
+    transformixImageFilter.SetOutputDirectory(str(results_path))
+    transformixImageFilter.Execute()
+
+    # from output file, parse the output points and compute TRE
+    out_points_path = results_path/'outputpoints.txt'
+    points_inhale_moved = parse_points_reg(out_points_path)
+    save_pts_itk(points_inhale_moved, results_path/f'{train_case}_outputpoints.pts')
+
+    case_results['bspline'] = compute_TRE(points_exhale, points_inhale_moved, voxel_spacing=moving_itk.GetSpacing())
+
+    if os.path.isfile(str(out_points_path)):
+        os.remove(str(out_points_path))
+
+    results[train_case] = case_results
+
+pd.DataFrame(results).to_csv(results_path/f'{exp_name}.csv')
+--------------------------------------------------------------------------------------
+
+# best working experiment so far (par0011_only_lm_mask_bspline1)
+
+# to save csv with results
+exp_name = 'best_experiment' 
+
+# select which cases to run
+cases = ['001'] # , '002', '003', '004']
+
+results = {}
+
+# either to save the transformed inhale points
+save_transformed_points = True
+
+for train_case in tqdm(cases, total=len(cases)):
+    
+    case_results = {}
+
+    # read images and masks
+    fixed_itk = sitk.ReadImage(str(scans_path/f'case_{train_case}_insp.nii.gz'))
+    fixed_image = convert_itk_to_nda(fixed_itk)
+    fixed_itk = normalize_copd_to_HU(fixed_image, fixed_itk)
+    fixed_mask = convert_nda_to_itk((fixed_image >= 0).astype(np.uint8), fixed_itk)
+
+    fixed_lung_mask = sitk.ReadImage(str(lung_masks_path/f'case_{train_case}_insp.nii.gz'))
+
+    moving_itk = sitk.ReadImage(str(scans_path/f'case_{train_case}_exp.nii.gz'))
+    moving_image = convert_itk_to_nda(moving_itk)
+    moving_itk = normalize_copd_to_HU(moving_image, moving_itk)
+    moving_mask = convert_nda_to_itk((moving_image >= 0).astype(np.uint8), moving_itk)
+
+    moving_lung_mask = sitk.ReadImage(str(lung_masks_path/f'case_{train_case}_exp.nii.gz'))
+
+    # # read points
+    points_inhale = np.loadtxt(kp_path/f'case_{train_case}_insp.txt').astype(np.int16)
+    points_exhale = np.loadtxt(kp_path/f'case_{train_case}_exp.txt').astype(np.int16)
+
+    pm_affine = sitk.ReadParameterFile(str(paramMaps_path/'Parameters.Par0011.affine.txt'))
+    pm_bspline_1 = sitk.ReadParameterFile(str(paramMaps_path/'Parameters.Par0011.bspline1_s.txt'))
+    pm_bspline_2 = sitk.ReadParameterFile(str(paramMaps_path/'Parameters.Par0011.bspline2_s.txt'))
+
+    moving_reg_affine, mov_param = register_image_external(fixed_image=fixed_itk, fixed_mask=fixed_lung_mask, 
+                                                    moving_image=moving_itk, moving_mask=moving_lung_mask, paramMaps=[pm_bspline_1],
+                                                    print_console=False)
+    
+    # propagate (transform) the points (landmarks) with the obtained transformation (deformation map)
+
+    transformixImageFilter = sitk.TransformixImageFilter()
+    transformixImageFilter.LogToConsoleOff()
+        # set moving image to initialize object correctly
+    transformixImageFilter.SetMovingImage(moving_itk)
+
+    # set previously obtained transformation parameters
+    transformixImageFilter.SetTransformParameterMap(mov_param)
+
+    # set points to transform (inhale)
+    transformixImageFilter.SetFixedPointSetFileName(str(kp_path/f"case_{train_case}_insp.pts"))
+    transformixImageFilter.SetOutputDirectory(str(results_path/'affine/'))
+    transformixImageFilter.Execute()
+
+    # from output file, parse the output points and compute TRE
+    out_points_path = results_path/'affine/outputpoints.txt'
+    points_inhale_moved = parse_points_reg(out_points_path)
+
+    if save_transformed_points:
+        np.savetxt((results_path/f'case_{train_case}_insp_moved.txt'), points_inhale_moved, delimiter='  ', fmt='%.6f')
+
+    case_results['baseline'] = compute_TRE(points_exhale, points_inhale, voxel_spacing=moving_itk.GetSpacing())
+    case_results['final'] = compute_TRE(points_exhale, points_inhale_moved, voxel_spacing=moving_itk.GetSpacing())
+
+    if os.path.isfile(str(out_points_path)):
+        os.remove(str(out_points_path))
+    
+    print(f"Baseline TRE: {case_results['baseline']}")
+    print(f"Registration (final) TRE: {case_results['final']}")
+
+    results[train_case] = case_results
+
+pd.DataFrame(results).to_csv(results_path/f'{exp_name}.csv')
+
+--------------------------------------------------------------------------------------

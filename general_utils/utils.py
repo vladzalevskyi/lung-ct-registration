@@ -5,6 +5,8 @@ import SimpleITK as sitk
 from numba import njit
 from typing import List
 from pathlib import Path
+from skimage.exposure import equalize_adapthist
+from lungmask import mask
 
 def resample2target(moving, target):
     """Resamples moving image to target image"""
@@ -412,6 +414,48 @@ def normalize_copd_to_HU(copd_image: np.ndarray, itk_image: sitk.Image, slope = 
 
     return convert_nda_to_itk(image_hu_nda, itk_image)
 
+def preprocess_image(image: sitk.Image):
+    """Apply preprocessing: min-max normalization and clahe
+
+    Args:
+        image (sitk.Image): Image to preprocess
+
+    Returns:
+        sitk.Image: Processed image
+    """
+    image_nda = convert_itk_to_nda(image)
+    image_nda[image_nda<0] = 0
+    image_nda = image_nda/np.max(image_nda)
+    image_nda = equalize_adapthist(image_nda)
+
+    return convert_nda_to_itk(image_nda, image)
+
+def segment_lungs(image: sitk.Image, output_path = None):
+    """Segment lungs from a lung CT scan.
+
+    Args:
+        image (sitk.Image): Image to segment
+        write_image (bool, optional): Whether to write the image in Disk. 
+        Defaults to True.
+        output_path (_type_, optional): Path with filename. Defaults to None.
+
+    Returns:
+        _type_: _description_
+    """
+    # normalize to HU
+    image_nda = convert_itk_to_nda(image)
+    image_HU = normalize_copd_to_HU(image_nda, image)
+
+    # segment using U-Net
+    segmentation = mask.apply(image_HU, force_cpu=True)
+    segmentation = np.moveaxis((segmentation >= 1).astype(np.uint8), 0, -1)
+    lung_mask_fixed = convert_nda_to_itk(segmentation, image)
+
+    if output_path:
+        sitk.WriteImage(lung_mask_fixed, str(output_path))
+
+    return lung_mask_fixed
+
 def save_pts_itk(points: np.ndarray, path: Path):
     """Generate the .pts file for transformation of points using
     simple itk's transformix object.
@@ -471,5 +515,41 @@ def transform_points(moving_itk: sitk.Image, mov_param: sitk.ParameterMap,
     # save points in required format by itk for further steps
     if save_points:
         save_pts_itk(pts_transformed, output_dir/f'case_{train_case}_outputpoints.pts')
+    
+    return pts_transformed
+
+def transform_points_test(moving_itk: sitk.Image, mov_param: sitk.ParameterMap, 
+                    fixed_points_path: Path, output_dir: Path):
+    """Process points to transform them using a transformation parameter object (itk). Returns 
+    the np.ndarray with the points for further TRE computation. It also outputs the points as a .pts
+    file for consecute registration transformations with elastix.
+
+    Args:
+        moving_itk (sitk.Image): Itk image to copy metadata
+        mov_param (_type_): transformation parameters
+        fixed_points_path (Path): Path to read the points that will be transformed.
+        Usually fixed image keypoints
+        output_dir (Path): Output directory where the "outputpoints.txt" will be written
+    """
+    transformixImageFilter = sitk.TransformixImageFilter()
+    transformixImageFilter.LogToConsoleOff()
+
+    # set moving image to initialize object correctly
+    transformixImageFilter.SetMovingImage(moving_itk)
+
+    # set previously obtained transformation parameters
+    transformixImageFilter.SetTransformParameterMap(mov_param)
+
+    # set points to transform (inhale)
+    transformixImageFilter.SetFixedPointSetFileName(str(fixed_points_path))
+    transformixImageFilter.SetOutputDirectory(str(output_dir))
+    transformixImageFilter.Execute()
+
+    # from output file, parse the output points and compute TRE
+    out_points_path = output_dir/'outputpoints.txt'
+    pts_transformed = parse_points_reg(out_points_path)
+
+    # save points in required format for TRE computation
+    save_pts(pts_transformed, output_dir/f'transformedpoints.txt')
     
     return pts_transformed

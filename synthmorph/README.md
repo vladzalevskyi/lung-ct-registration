@@ -1,4 +1,5 @@
-##References
+## References
 Code and weights adopted from
-https://synthmorph.voxelmorph.net/
-https://github.com/voxelmorph/voxelmorph#SynthMorph
+
+1. https://synthmorph.voxelmorph.net/
+2. https://github.com/voxelmorph/voxelmorph#SynthMorph

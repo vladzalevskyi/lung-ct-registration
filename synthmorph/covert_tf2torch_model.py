@@ -12,9 +12,12 @@ from voxelmorph.torch.networks import VxmDense
 
 # ---- CONVERT THE KERAS/TENSORFLOW H5 MODEL TO PYTORCH ---- #
 
+# IMG_DIM = (512, 512, 96) # INPUT IMAGE DIMENSIONS (should be divisible by 32 because of 5 level unet)
+IMG_DIM = (224, 224, 96)
+
 # Build a Torch model and set the weights from the Keras model
 reg_args = dict(
-    inshape=[160, 160, 192],
+    inshape=IMG_DIM,
     int_steps=5,
     int_downsize=2,   # same as int_resolution=2, in keras model
     unet_half_res=True,  # same as svf_resolution=2, in keras model
@@ -46,4 +49,4 @@ for k, v in torchparam.items():
 pt_model.load_state_dict(torchparam)
 
 # Save the PyTorch model
-torch.save(pt_model, 'pt_smshapes.pt')
+torch.save(pt_model, 'models/weights/torch_shapes.pt')

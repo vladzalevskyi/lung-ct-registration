@@ -1,3 +1,7 @@
+# ours
+data/
+test_data/
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
@@ -135,6 +139,13 @@ dmypy.json
 # ignore data files
 data/learn2reg/
 data/empire10/
+data/copd_scans/
+
+# ignore results
+lightning_logs/
+processed_data/
+models/weights
+synthmorph/results/
 data/copd/keypoints/
 data/copd/lungMasks/
 data/copd/results/

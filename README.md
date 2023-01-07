@@ -1,9 +1,13 @@
 # CT registration challenge
 This repository contrains source code and the report for the COPD lung CT registration challenge. It was the final assignment for the **Medical Image Registration and Analysis** course at the University of Girona for the [MAIA programme](https://maiamaster.udg.edu/).
 
-**Proposed solution was awarded with the third place and reached a mean TRE of 1.423 mm on the test dataset on the challenge day.**
+|![img](figures/landmarks.png)|
+| :--: | 
+| *Images used for registration. Inhale on the left, exhale on the right with the landmark points plotted over the original image (white dots). Case image 1, transversal view, left-inhale, right-exhale* |
 
-[**Link to the Report**](MIRA_final_project.pdf)
+**Proposed solution was awarded with the third place and reached a mean TRE of 1.423 mm on the test dataset on the challenge day.**
+<center> <h3> <a href=MIRA_final_project.pdf>Link to the Report </a></h3></center>
+
 ___
 ## Authors
 Alejandro Cortina Uribe [github](https://github.com/alexCortinaU) | [linkedin](https://www.linkedin.com/in/acortinau/)

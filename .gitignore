@@ -141,3 +141,8 @@ data/copd/results/
 data/copd/scans/
 data/copd/test_data/
 data/copd/test_data_case001/
+
+data/copd/
+
+# ignore results
+lightning_logs/

@@ -6,3 +6,6 @@ nibabel
 opecv-python
 lungmask
 SimpleITK-SimpleElastix
+
+dipy
+

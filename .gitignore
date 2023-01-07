@@ -26,6 +26,7 @@ share/python-wheels/
 .installed.cfg
 *.egg
 MANIFEST
+test_data/
 
 # PyInstaller
 #  Usually these files are written by a python script from a template
@@ -134,6 +135,13 @@ dmypy.json
 # ignore data files
 data/learn2reg/
 data/empire10/
+data/copd/keypoints/
+data/copd/lungMasks/
+data/copd/results/
+data/copd/scans/
+data/copd/test_data/
+data/copd/test_data_case001/
+
 data/copd/
 
 # ignore results

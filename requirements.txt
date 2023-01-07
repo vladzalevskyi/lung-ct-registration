@@ -1,3 +1,11 @@
 gdown
+pytorch
+torchvision
+torchaudio
+nibabel
+opecv-python
+lungmask
+SimpleITK-SimpleElastix
+
 dipy
 

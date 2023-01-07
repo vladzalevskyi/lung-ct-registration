@@ -49,4 +49,33 @@ gdown --folder 1cARJcCKWtGP44p3e0X4Umpf_ISB-64lC # for our 4 COPD train cases
 │       │   ├── ..........
 ```
 ### After the data is in the right format run the script to fix train/val splits
-```$ python data/fix_train_partitions.py```s
+```
+$ python data/fix_train_partitions.py
+
+```
+
+### Test TODO
+1. Make sure you have the envioronment copy set up
+```
+conda create --name myenv --file env-spec-file.txt
+```
+2. You will need to have a directory called ```paramMaps``` in the location ```data/copd/paramMaps```. Three files must be there:
+- Parameters.Par0011.affine.txt
+- Parameters.Par0011.bspline1_s.txt
+- Parameters.Par0011.bspline2_s.txt
+
+3. You will need to save your Dir-Lab COPDgene **test** images in the test_data folder. These will need to be:
+
+- inhale image (nii.gz)
+- exhale image (nii.gz)
+- inhale landarmks (.txt)
+
+4. From the repository directory, run the file ```register.py```:
+```
+python register.py fixed_image_path moving_image_path fixed_image_points_path
+```
+5. The resulting files will be saved in the ```test_data``` folder:
+- inhale lung mask (_lm.nii.gz)
+- exhale lung mask (_lm.nii.gz)
+- exhale lung mask transformed (_lm_transformed.nii.gz)
+- transformed inhale points (transformed_points.txt)
